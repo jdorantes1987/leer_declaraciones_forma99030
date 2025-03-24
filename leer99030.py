@@ -27,6 +27,7 @@ def extraer_informacion_declaraciones():
                 per_planilla = periodo + "-" + contenido[4]
                 informacion_fiscal[per_planilla] = dict_periodos
                 dict_periodos = {}
+                dict_periodos.update({"Periodo": periodo})
         elif "Ventas" in contenido and "no" in contenido:
             
             ventas_no_gravadas = {
@@ -59,6 +60,6 @@ def extraer_informacion_declaraciones():
 
 
 if __name__ == "__main__":
-    datos = extraer_informacion_declaraciones()[["Ventas Base Imponible", "Ventas No Gravadas", "Débito Fiscal", "Compras Base Imponible", "Compras No Gravadas", "Crédito Fiscal"]]
-    print(datos)
+    datos = extraer_informacion_declaraciones()[["Periodo", "Ventas Base Imponible", "Ventas No Gravadas", "Débito Fiscal", "Compras Base Imponible", "Compras No Gravadas", "Crédito Fiscal"]]
+    datos.to_excel("informacion_fiscal.xlsx")
     
