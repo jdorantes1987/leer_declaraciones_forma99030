@@ -1,6 +1,7 @@
 import re
 from pandas import DataFrame
 
+
 def extraer_valor(valor):
     return float(valor.replace(".", "").replace(",", "."))
 
@@ -20,16 +21,16 @@ def extraer_informacion_declaraciones():
     dict_periodos = {}
     for num_linea, valores in informacion.items():
         contenido = valores.split()
-        if len(contenido)==2 or ("FORMA" in contenido and "99030" in contenido):
+        if len(contenido) == 2 or ("FORMA" in contenido and "99030" in contenido):
             if contenido[0].isnumeric() and contenido[1].isnumeric():
-                periodo = contenido[1]  + contenido[0]
-            if contenido[0]=="FORMA":
+                periodo = contenido[1] + contenido[0]
+            if contenido[0] == "FORMA":
                 per_planilla = periodo + "-" + contenido[4]
                 informacion_fiscal[per_planilla] = dict_periodos
                 dict_periodos = {}
                 dict_periodos.update({"Periodo": periodo})
         elif "Ventas" in contenido and "no" in contenido:
-            
+
             ventas_no_gravadas = {
                 "Ventas No Gravadas": extraer_valor(contenido[6]),
             }
@@ -56,10 +57,19 @@ def extraer_informacion_declaraciones():
             dict_periodos.update(compras_gravadas)
 
     # convertir a dataframe
-    return DataFrame(informacion_fiscal).T # Transponer
+    return DataFrame(informacion_fiscal).T  # Transponer
 
 
 if __name__ == "__main__":
-    datos = extraer_informacion_declaraciones()[["Periodo", "Ventas Base Imponible", "Ventas No Gravadas", "Débito Fiscal", "Compras Base Imponible", "Compras No Gravadas", "Crédito Fiscal"]]
+    datos = extraer_informacion_declaraciones()[
+        [
+            "Periodo",
+            "Ventas Base Imponible",
+            "Ventas No Gravadas",
+            "Débito Fiscal",
+            "Compras Base Imponible",
+            "Compras No Gravadas",
+            "Crédito Fiscal",
+        ]
+    ]
     datos.to_excel("informacion_fiscal.xlsx")
-    
