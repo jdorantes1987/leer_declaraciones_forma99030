@@ -1,8 +1,13 @@
 import re
+from pandas import DataFrame
+
+def extraer_valor(valor):
+    return float(valor.replace(".", "").replace(",", "."))
 
 
-def leer_file(archivo):
-    with open(archivo, "r", encoding="utf-8") as file:
+def extraer_informacion_declaraciones():
+    file_path = "FORMAS 99030.txt"
+    with open(file_path, "r", encoding="utf-8") as file:
         lineas = file.readlines()
 
     informacion = {}
@@ -10,58 +15,50 @@ def leer_file(archivo):
     for linea in lineas:
         informacion[i] = linea.strip()
         i += 1
-
-    return informacion
-
-
-def extraer_valor(valor):
-    return float(valor.replace(".", "").replace(",", "."))
-
-
-def extraer_informacion_fiscal(contenido_linea):
-    valores = contenido_linea.split()
-    resultado = {}
-
-    if False:
-        resultado = {
-            "anio": valores[1],
-            "mes": valores[0],
-        }
-    elif "Ventas" in valores and "no" in valores:
-        resultado = {
-            "Ventas No Gravadas": extraer_valor(valores[6]),
-        }
-    elif "Ventas" in valores and "Gravadas" in valores and "42" in valores:
-        resultado = {
-            "Ventas Base Imponible": extraer_valor(valores[8]),
-            "Débito Fiscal": extraer_valor(valores[10]),
-        }
-    elif "Fiscal" in valores and "30" in valores:
-        resultado = {
-            "Compras No Gravadas": extraer_valor(valores[2]),
-        }
-    elif "Compras" in valores and "Gravadas" in valores and "33" in valores:
-        resultado = {
-            "Compras Base Imponible": extraer_valor(valores[8]),
-            "Crédito Fiscal": extraer_valor(valores[10]),
-        }
-
-    return resultado
-
-
-def main():
-    archivo = "FORMA 99030 IVA DECLARACION 062024.txt"
-    lee_archivo = leer_file(archivo)
-
+    periodo = ""
     informacion_fiscal = {}
-    for num_linea, contenido in lee_archivo.items():
-        if contenido != "No existe":
-            datos_fiscales = extraer_informacion_fiscal(contenido)
-            if datos_fiscales:
-                informacion_fiscal[num_linea] = datos_fiscales
+    dict_periodos = {}
+    for num_linea, valores in informacion.items():
+        contenido = valores.split()
+        if len(contenido)==2 or ("FORMA" in contenido and "99030" in contenido):
+            if contenido[0].isnumeric() and contenido[1].isnumeric():
+                periodo = contenido[1]  + contenido[0]
+            if contenido[0]=="FORMA":
+                per_planilla = periodo + "-" + contenido[4]
+                informacion_fiscal[per_planilla] = dict_periodos
+                dict_periodos = {}
+        elif "Ventas" in contenido and "no" in contenido:
+            
+            ventas_no_gravadas = {
+                "Ventas No Gravadas": extraer_valor(contenido[6]),
+            }
+            dict_periodos.update(ventas_no_gravadas)
 
-    print(informacion_fiscal)
+        elif "Ventas" in contenido and "Gravadas" in contenido and "42" in contenido:
+            ventas_gravadas = {
+                "Ventas Base Imponible": extraer_valor(contenido[8]),
+                "Débito Fiscal": extraer_valor(contenido[10]),
+            }
+            dict_periodos.update(ventas_gravadas)
+
+        elif "Fiscal" in contenido and "30" in contenido:
+            compras_no_gravadas = {
+                "Compras No Gravadas": extraer_valor(contenido[2]),
+            }
+            dict_periodos.update(compras_no_gravadas)
+
+        elif "Compras" in contenido and "Gravadas" in contenido and "33" in contenido:
+            compras_gravadas = {
+                "Compras Base Imponible": extraer_valor(contenido[8]),
+                "Crédito Fiscal": extraer_valor(contenido[10]),
+            }
+            dict_periodos.update(compras_gravadas)
+
+    # convertir a dataframe
+    return DataFrame(informacion_fiscal).T # Transponer
 
 
 if __name__ == "__main__":
-    main()
+    datos = extraer_informacion_declaraciones()[["Ventas Base Imponible", "Ventas No Gravadas", "Débito Fiscal", "Compras Base Imponible", "Compras No Gravadas", "Crédito Fiscal"]]
+    print(datos)
+    
