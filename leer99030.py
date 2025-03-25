@@ -1,4 +1,3 @@
-import re
 from pandas import DataFrame
 
 
@@ -27,10 +26,7 @@ def extraer_informacion_declaraciones():
             if contenido[0] == "FORMA":
                 per_planilla = periodo + "-" + contenido[4]
                 informacion_fiscal[per_planilla] = dict_periodos
-                dict_periodos = {}
-                dict_periodos.update({"Periodo": periodo})
         elif "Ventas" in contenido and "no" in contenido:
-
             ventas_no_gravadas = {
                 "Ventas No Gravadas": extraer_valor(contenido[6]),
             }
@@ -55,6 +51,49 @@ def extraer_informacion_declaraciones():
                 "Crédito Fiscal": extraer_valor(contenido[10]),
             }
             dict_periodos.update(compras_gravadas)
+        elif "Excedente" in contenido and "Fiscales" in contenido and "20" in contenido:
+            exced_cf_mes_anterior = {
+                "Exced_cf_m_Ante": extraer_valor(contenido[14]),
+            }
+            dict_periodos.update(exced_cf_mes_anterior)
+
+        elif "Excedente" in contenido and "Fiscal" in contenido and "60" in contenido:
+            exced_cf_mes_siguiente = {
+                "Exced_cf_m_Sig": extraer_valor(contenido[10]),
+            }
+            dict_periodos.update(exced_cf_mes_siguiente)
+
+        elif (
+            "Retenciones" in contenido
+            and "Acumuladas" in contenido
+            and "54" in contenido
+        ):
+            ret_acum = {
+                "Ret_Acum": extraer_valor(contenido[6]),
+            }
+            dict_periodos.update(ret_acum)
+
+        elif (
+            "Retenciones" in contenido
+            and "Descontadas" in contenido
+            and "55" in contenido
+        ):
+            ret_descontadas = {
+                "Ret_Desc": extraer_valor(contenido[9]),
+            }
+            dict_periodos.update(ret_descontadas)
+
+        elif (
+            "Retenciones" in contenido and "Período" in contenido and "66" in contenido
+        ):
+            ret_periodo = {
+                "Ret_Periodo": extraer_valor(contenido[5]),
+            }
+            dict_periodos.update(ret_periodo)
+
+        elif "Total" in contenido and "Pagar" in contenido and "90" in contenido:
+            dict_periodos.update({"Periodo": periodo})
+            dict_periodos = {}
 
     # convertir a dataframe
     return DataFrame(informacion_fiscal).T  # Transponer
@@ -70,6 +109,11 @@ if __name__ == "__main__":
             "Compras Base Imponible",
             "Compras No Gravadas",
             "Crédito Fiscal",
+            "Exced_cf_m_Ante",
+            "Exced_cf_m_Sig",
+            "Ret_Acum",
+            "Ret_Desc",
+            "Ret_Periodo",
         ]
     ]
     datos.to_excel("informacion_fiscal.xlsx")
