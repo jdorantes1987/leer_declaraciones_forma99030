@@ -1,4 +1,5 @@
 from pandas import DataFrame
+from datetime import datetime
 
 
 def extraer_valor(valor):
@@ -12,6 +13,7 @@ def extraer_informacion_declaraciones():
 
     informacion = {}
     i = 0
+    pag = 0
     for linea in lineas:
         informacion[i] = linea.strip()
         i += 1
@@ -20,12 +22,18 @@ def extraer_informacion_declaraciones():
     dict_periodos = {}
     for num_linea, valores in informacion.items():
         contenido = valores.split()
-        if len(contenido) == 2 or ("FORMA" in contenido and "99030" in contenido):
+        if (len(contenido) == 2 and "Página" not in contenido) or (
+            "FORMA" in contenido and "99030" in contenido
+        ):
             if contenido[0].isnumeric() and contenido[1].isnumeric():
                 periodo = contenido[1] + contenido[0]
             if contenido[0] == "FORMA":
                 per_planilla = periodo + "-" + contenido[4]
                 informacion_fiscal[per_planilla] = dict_periodos
+
+        elif "Página" in contenido:
+            pag = contenido[1]
+
         elif "Ventas" in contenido and "no" in contenido:
             ventas_no_gravadas = {
                 "Ventas No Gravadas": extraer_valor(contenido[6]),
@@ -91,6 +99,12 @@ def extraer_informacion_declaraciones():
             }
             dict_periodos.update(ret_periodo)
 
+        elif "SI" in contenido and "DECLARACIÓN" in contenido and "FECHA" in contenido:
+            if pag == "1":
+                dict_periodos.update(
+                    {"Fecha": datetime.strptime(contenido[11], "%d/%m/%Y")}
+                )
+
         elif "Total" in contenido and "Pagar" in contenido and "90" in contenido:
             dict_periodos.update({"Periodo": periodo})
             dict_periodos = {}
@@ -103,6 +117,7 @@ if __name__ == "__main__":
     datos = extraer_informacion_declaraciones()[
         [
             "Periodo",
+            "Fecha",
             "Ventas Base Imponible",
             "Ventas No Gravadas",
             "Débito Fiscal",
