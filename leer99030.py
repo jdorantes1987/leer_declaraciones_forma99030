@@ -70,7 +70,8 @@ def extraer_informacion_declaraciones():
         elif (
             "Retenciones" in contenido and "Período" in contenido and "66" in contenido
         ):
-            actualizar_dict_periodos("Ret_Periodo", contenido[5])
+            if len(contenido) > 5:
+                actualizar_dict_periodos("Ret_Periodo", contenido[5])
 
         elif (
             "SI" in contenido
